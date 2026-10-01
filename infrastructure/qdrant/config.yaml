@@ -1,0 +1,17 @@
+# Qdrant configuration overrides (mounted as /qdrant/config/production.yaml).
+# The API key is provided via QDRANT__SERVICE__API_KEY (required in production).
+log_level: INFO
+
+storage:
+  storage_path: /qdrant/storage
+  snapshots_path: /qdrant/storage/snapshots
+  # Keep payload indexes on disk-friendly settings for large metadata catalogs.
+  on_disk_payload: true
+
+service:
+  http_port: 6333
+  grpc_port: 6334
+  enable_cors: false
+  max_request_size_mb: 32
+
+telemetry_disabled: true

@@ -1,0 +1,144 @@
+# Celery worker (metadata sync, semantic ingestion, exports) and the single Celery beat
+# scheduler (export expiry). Beat must never run more than once: replicas 1 + Recreate.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels: &labels
+    app.kubernetes.io/name: erp-insight-worker
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: erp-insight-worker
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      serviceAccountName: erp-insight-app
+      automountServiceAccountToken: false
+      # Long exports finish or hit their own time limits (soft 900 s) before SIGKILL.
+      terminationGracePeriodSeconds: 960
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: worker
+          image: erp-insight-worker:0.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - celery
+            - -A
+            - erp_worker.main:celery_app
+            - worker
+            - --loglevel
+            - INFO
+            - --concurrency
+            - "4"
+            - -Q
+            - default,metadata,ingestion,queries,exports
+            - --without-gossip
+            - --without-mingle
+          envFrom:
+            - configMapRef: {name: erp-insight-config}
+            - secretRef: {name: erp-insight-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 3Gi}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - celery -A erp_worker.main:celery_app inspect ping -d celery@$HOSTNAME --timeout 5 >/dev/null
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 20
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            - {name: exports, mountPath: /srv/data/exports}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 1Gi}
+        - name: exports
+          persistentVolumeClaim: {claimName: erp-insight-exports}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: worker
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: erp-insight-worker
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler
+  labels: &sched
+    app.kubernetes.io/name: erp-insight-scheduler
+    app.kubernetes.io/component: scheduler
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  replicas: 1  # never scale: duplicate beat instances duplicate schedules
+  strategy: {type: Recreate}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: erp-insight-scheduler
+  template:
+    metadata:
+      labels: *sched
+    spec:
+      serviceAccountName: erp-insight-app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: scheduler
+          image: erp-insight-worker:0.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - celery
+            - -A
+            - erp_worker.main:celery_app
+            - beat
+            - --loglevel
+            - INFO
+            - --schedule
+            - /tmp/celerybeat-schedule
+          envFrom:
+            - configMapRef: {name: erp-insight-config}
+            - secretRef: {name: erp-insight-secrets}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          livenessProbe:
+            exec:
+              command: [sh, -c, "test -f /tmp/celerybeat-schedule"]
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}

@@ -1,0 +1,21 @@
+metrics:
+  - name: collection_rate
+    entity: Invoice
+    description: Amount collected as a percentage of the amount invoiced.
+    expression: {op: percent_of, left: paid_amount, right: invoiced_amount}
+    format: percent
+    synonyms: [collection efficiency, cash collection rate]
+
+  - name: overdue_share
+    entity: Invoice
+    description: Overdue balance as a percentage of the total outstanding balance.
+    expression: {op: percent_of, left: overdue_amount, right: outstanding_amount}
+    format: percent
+    synonyms: [overdue percentage, past due ratio]
+
+  - name: late_delivery_rate
+    entity: PurchaseOrder
+    description: Late purchase orders as a percentage of all purchase orders.
+    expression: {op: percent_of, left: late_po_count, right: po_count}
+    format: percent
+    synonyms: [supplier late rate, delivery delay rate]

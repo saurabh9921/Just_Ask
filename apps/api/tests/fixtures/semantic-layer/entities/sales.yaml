@@ -1,0 +1,253 @@
+# Sales entities. Bound to the reporting views created by app/demo/seed.py.
+# Every field below must exist on the referenced view (checked by bind_to_catalog).
+entities:
+  - entity: SalesOrder
+    description: >-
+      Customer sales orders at order-header grain: one row per sales order with its
+      region, branch, customer, status and order-level amounts (gross, discount, net).
+      Use for revenue, order counts, average order value and open-order ageing.
+    source:
+      logical_name: analytics_sales_orders
+      allowed_database_objects: [analytics_sales_orders]
+    synonyms: [sales, orders, sales orders, SO, customer orders, bookings]
+    classification: internal
+    large_fact: true
+    default_time_field: order_date
+    dimensions:
+      - name: order_id
+        field: order_id
+        type: integer
+        description: Internal sales order identifier.
+      - name: order_number
+        field: order_number
+        type: string
+        description: Business order number such as SO-100123.
+        synonyms: [SO number, order no, sales order number]
+      - name: status
+        field: status
+        type: string
+        description: "Order status: open, processing, shipped, delivered or cancelled. Open orders are open or processing."
+        synonyms: [order status, state, stage]
+      - name: region
+        field: region_name
+        type: string
+        description: Sales region of the selling branch (North, South, East, West).
+        synonyms: [territory, zone, area, sales region]
+      - name: branch
+        field: branch_name
+        type: string
+        description: Selling branch or office.
+        synonyms: [office, location, sales office, store, site]
+      - name: customer_id
+        field: customer_id
+        type: integer
+        description: Internal customer identifier.
+      - name: customer
+        field: customer_name
+        type: string
+        description: Customer (sold-to party) name.
+        synonyms: [client, account, buyer, sold-to]
+      - name: days_open
+        field: days_open
+        type: integer
+        description: >-
+          Order age in days: days since the order date for open orders, days from order
+          to closure for closed orders.
+        synonyms: [order age, age in days, days outstanding]
+    measures:
+      - name: total_sales
+        field: net_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Net sales value after discounts.
+        synonyms: [revenue, turnover, net sales, sales amount, sales value]
+      - name: gross_sales
+        field: gross_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Sales value before discounts.
+        synonyms: [gross revenue, list value]
+      - name: total_discount
+        field: discount_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Total discount granted on orders.
+        synonyms: [discounts, rebates, price reductions]
+      - name: order_count
+        field: order_id
+        aggregation: count_distinct
+        type: integer
+        format: integer
+        description: Number of distinct sales orders.
+        synonyms: [number of orders, orders count, order volume]
+      - name: average_days_open
+        field: days_open
+        aggregation: avg
+        type: decimal
+        format: decimal
+        description: Average order age in days.
+        synonyms: [average order age]
+      - name: max_days_open
+        field: days_open
+        aggregation: max
+        type: integer
+        format: integer
+        description: Age in days of the oldest order.
+        synonyms: [oldest order age]
+    time_fields:
+      - name: order_date
+        field: order_date
+        type: date
+        default: true
+        description: Date the order was placed.
+    security:
+      required_filters:
+        - tenant_code
+      forbidden_fields: [customer_bank_account, bank_account, tax_id, payment_token, email, phone]
+    formatting:
+      currency: USD
+      locale: en-US
+
+  - entity: SalesLine
+    description: >-
+      Sales order lines at product grain: one row per product on an order, with
+      quantity, net line value, cost and gross profit. Use for product, SKU and
+      category rankings, units sold and margins.
+    source:
+      logical_name: analytics_sales_lines
+      allowed_database_objects: [analytics_sales_lines]
+    synonyms: [order lines, line items, product sales, item sales, sales lines]
+    classification: internal
+    large_fact: true
+    default_time_field: order_date
+    dimensions:
+      - name: order_number
+        field: order_number
+        type: string
+        description: Business order number of the parent order.
+        synonyms: [SO number, order no]
+      - name: status
+        field: status
+        type: string
+        description: Status of the parent order.
+        synonyms: [order status]
+      - name: region
+        field: region_name
+        type: string
+        description: Sales region of the selling branch.
+        synonyms: [territory, zone, area]
+      - name: branch
+        field: branch_name
+        type: string
+        description: Selling branch.
+        synonyms: [office, location, store]
+      - name: customer
+        field: customer_name
+        type: string
+        description: Customer name.
+        synonyms: [client, account, buyer]
+      - name: product
+        field: product_name
+        type: string
+        description: Product name, for example "Product A".
+        synonyms: [item, article, material, goods]
+      - name: sku
+        field: sku
+        type: string
+        description: Stock keeping unit code such as PA-0001.
+        synonyms: [item code, product code, material number, part number]
+      - name: category
+        field: category
+        type: string
+        description: Product category or family.
+        synonyms: [product group, product family, product line]
+    measures:
+      - name: total_sales
+        field: net_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Net sales value of the lines.
+        synonyms: [revenue, product revenue, net sales, turnover]
+      - name: units_sold
+        field: quantity
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Quantity sold.
+        synonyms: [quantity sold, volume, units, qty]
+      - name: total_cost
+        field: cost_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Cost of goods sold for the lines.
+        synonyms: [COGS, cost of sales]
+      - name: gross_profit
+        field: gross_profit
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Net sales minus cost of goods sold.
+        synonyms: [margin, gross margin value, profit]
+      - name: line_count
+        field: line_id
+        aggregation: count
+        type: integer
+        format: integer
+        description: Number of order lines.
+        synonyms: [number of lines]
+    time_fields:
+      - name: order_date
+        field: order_date
+        type: date
+        default: true
+        description: Date of the parent order.
+    security:
+      required_filters:
+        - tenant_code
+      forbidden_fields: [customer_bank_account, bank_account, tax_id, payment_token]
+
+  - entity: OrderStatusDaily
+    description: >-
+      Daily order counts and values per order status. Use for order pipeline and
+      status mix questions (how many orders are open, shipped, cancelled per day).
+    source:
+      logical_name: analytics_order_status
+      allowed_database_objects: [analytics_order_status]
+    synonyms: [order status summary, order pipeline, status mix]
+    classification: internal
+    default_time_field: order_date
+    dimensions:
+      - name: status
+        field: status
+        type: string
+        description: Order status.
+        synonyms: [order status, state]
+    measures:
+      - name: order_count
+        field: order_count
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Number of orders.
+        synonyms: [orders, number of orders]
+      - name: total_sales
+        field: net_amount
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Net value of the orders.
+        synonyms: [order value, revenue]
+    time_fields:
+      - name: order_date
+        field: order_date
+        type: date
+        default: true
+        description: Order date.
+    security:
+      required_filters:
+        - tenant_code

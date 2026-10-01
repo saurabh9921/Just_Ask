@@ -1,0 +1,21 @@
+{
+  "$id": "https://erp-insight-ai.local/contracts/export-download-token.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "One-time, short-lived download URL (bearer-less, like a presigned URL).",
+  "properties": {
+    "expires_in": {
+      "title": "Expires In",
+      "type": "integer"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "url",
+    "expires_in"
+  ],
+  "title": "DownloadTokenOut",
+  "type": "object"
+}

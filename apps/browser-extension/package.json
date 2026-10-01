@@ -1,0 +1,48 @@
+{
+  "name": "@erp-insight-ai/browser-extension",
+  "version": "0.5.0",
+  "private": true,
+  "description": "ERP Insight AI - Chrome Manifest V3 side panel extension (Angular).",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "icons": "node scripts/generate-icons.mjs",
+    "build": "ng build && node scripts/build-extension.mjs",
+    "build:dev": "ng build --configuration development && node scripts/build-extension.mjs --dev",
+    "test": "ng test --watch=false",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.background.json --noEmit && tsc -p tsconfig.spec.json --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,html,scss,json}\" \"scripts/**/*.mjs\" manifest.json",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\" \"scripts/**/*.mjs\" manifest.json"
+  },
+  "dependencies": {
+    "@angular/cdk": "22.1.7",
+    "@angular/common": "22.1.7",
+    "@angular/compiler": "22.1.7",
+    "@angular/core": "22.1.7",
+    "@angular/forms": "22.1.7",
+    "@angular/material": "22.1.7",
+    "@angular/platform-browser": "22.1.7",
+    "@angular/router": "22.1.7",
+    "echarts": "6.1.0",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "22.1.8",
+    "@angular/cli": "22.1.8",
+    "@angular/compiler-cli": "22.1.7",
+    "@types/chrome": "0.3.0",
+    "angular-eslint": "22.5.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.11.0",
+    "jsdom": "27.4.0",
+    "prettier": "3.9.8",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  }
+}

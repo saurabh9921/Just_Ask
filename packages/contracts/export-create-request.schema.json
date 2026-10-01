@@ -1,0 +1,40 @@
+{
+  "$id": "https://erp-insight-ai.local/contracts/export-create-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "confirm": {
+      "default": false,
+      "title": "Confirm",
+      "type": "boolean"
+    },
+    "format": {
+      "default": "csv",
+      "enum": [
+        "csv",
+        "json"
+      ],
+      "title": "Format",
+      "type": "string"
+    },
+    "query_id": {
+      "format": "uuid",
+      "title": "Query Id",
+      "type": "string"
+    },
+    "scope": {
+      "default": "result",
+      "enum": [
+        "result",
+        "all_rows"
+      ],
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query_id"
+  ],
+  "title": "ExportCreate",
+  "type": "object"
+}

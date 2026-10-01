@@ -1,0 +1,37 @@
+<a class="skip-link" href="#main" (click)="focusMain($event)">Skip to main content</a>
+
+<header class="topbar">
+  <div class="brand">
+    <img class="brand__logo" src="icons/icon-32.png" alt="" width="24" height="24" />
+    <span class="brand__name">ERP Insight AI</span>
+  </div>
+  <div class="topbar__actions">
+    <eia-connection-status-indicator />
+    @if (auth.user(); as user) {
+      <span class="user" data-testid="current-user">
+        <span class="user__name">{{ user.displayName }}</span>
+        <span class="user__tenant">{{ user.tenant.name }}</span>
+      </span>
+      <button mat-button type="button" (click)="logout()">Sign out</button>
+    }
+  </div>
+</header>
+
+<nav mat-tab-nav-bar [tabPanel]="tabPanel" aria-label="Primary" class="primary-nav">
+  @for (item of nav(); track item.path) {
+    <a
+      mat-tab-link
+      [routerLink]="item.path"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [active]="rla.isActive"
+      >{{ item.label }}</a
+    >
+  }
+</nav>
+
+<mat-tab-nav-panel #tabPanel>
+  <main id="main" tabindex="-1" class="main">
+    <router-outlet />
+  </main>
+</mat-tab-nav-panel>

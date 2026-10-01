@@ -1,0 +1,127 @@
+# ERP Insight AI - Prometheus alerting rules (Phase 7).
+# Every metric referenced here is checked against the application's registry by
+# apps/api/tests/unit/test_observability_config.py, so renames cannot silently
+# disable an alert. Severities: critical = page, warning = ticket.
+# Runbooks: docs/observability.md#alert-runbooks
+groups:
+  - name: erp-insight-availability
+    rules:
+      - alert: ErpInsightApiDown
+        expr: up{job="erp-insight-api"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: An API instance is not being scraped
+          runbook: docs/observability.md#erpinsightapidown
+
+      - alert: ErpInsightHigh5xxRatio
+        expr: |
+          sum(rate(erp_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(erp_http_requests_total[5m])), 1e-9) > 0.05
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: More than 5% of API requests fail with 5xx
+          runbook: docs/observability.md#erpinsighthigh5xxratio
+
+      - alert: ErpInsightDependencyDown
+        expr: erp_dependency_up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "Dependency {{ $labels.dependency }} is down"
+          runbook: docs/observability.md#erpinsightdependencydown
+
+  - name: erp-insight-safety
+    rules:
+      # The compiled SQL failed the independent SQL validator: a compiler or policy
+      # defect. The statement was NOT executed, but this must never happen.
+      - alert: ErpInsightSqlSafetyRejection
+        expr: increase(erp_sql_safety_rejections_total[5m]) > 0
+        labels: {severity: critical}
+        annotations:
+          summary: "Compiled SQL was rejected by the SQL safety validator ({{ $labels.reason }})"
+          runbook: docs/observability.md#erpinsightsqlsafetyrejection
+
+      - alert: ErpInsightRefreshTokenReuse
+        expr: increase(erp_auth_events_total{event="refresh", outcome="reuse_detected"}[10m]) > 0
+        labels: {severity: warning}
+        annotations:
+          summary: A revoked refresh token was presented (possible token theft)
+          runbook: docs/observability.md#erpinsightrefreshtokenreuse
+
+      - alert: ErpInsightGuardRefusalSpike
+        expr: sum(increase(erp_question_guard_refusals_total[15m])) > 30
+        labels: {severity: warning}
+        annotations:
+          summary: Many write/sensitive-data requests were refused (possible probing)
+          runbook: docs/observability.md#erpinsightguardrefusalspike
+
+      - alert: ErpInsightLoginFailureSpike
+        expr: sum(increase(erp_auth_events_total{event="login", outcome!="success"}[10m])) > 50
+        labels: {severity: warning}
+        annotations:
+          summary: Many failed logins (credential stuffing?)
+          runbook: docs/observability.md#erpinsightloginfailurespike
+
+  - name: erp-insight-ai
+    rules:
+      - alert: ErpInsightLlmErrors
+        expr: |
+          sum(rate(erp_llm_request_duration_seconds_count{outcome="error"}[10m]))
+            / clamp_min(sum(rate(erp_llm_request_duration_seconds_count[10m])), 1e-9) > 0.2
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: More than 20% of model calls fail
+          runbook: docs/observability.md#erpinsightllmerrors
+
+      - alert: ErpInsightLlmInvalidOutput
+        expr: |
+          sum(rate(erp_llm_validation_failures_total[30m]))
+            / clamp_min(sum(rate(erp_llm_request_duration_seconds_count[30m])), 1e-9) > 0.1
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: The model often returns output that fails schema validation
+          runbook: docs/observability.md#erpinsightllminvalidoutput
+
+      - alert: ErpInsightAnalyticsSlow
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(erp_analytics_query_duration_seconds_bucket{status="succeeded"}[15m]))) > 5
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: p95 answer time is above the 5 s target
+          runbook: docs/observability.md#erpinsightanalyticsslow
+
+  - name: erp-insight-connectors
+    rules:
+      - alert: ErpInsightConnectorCircuitOpen
+        expr: sum by (connector) (increase(erp_connector_operations_total{operation="breaker", outcome="open"}[5m])) > 0
+        labels: {severity: warning}
+        annotations:
+          summary: "A {{ $labels.connector }} database is failing repeatedly (circuit open)"
+          runbook: docs/observability.md#erpinsightconnectorcircuitopen
+
+      - alert: ErpInsightConnectorSaturated
+        expr: sum by (connector) (increase(erp_connector_operations_total{operation="queue", outcome="busy"}[10m])) > 10
+        labels: {severity: warning}
+        annotations:
+          summary: "Queries wait too long for a {{ $labels.connector }} connection"
+          runbook: docs/observability.md#erpinsightconnectorsaturated
+
+      - alert: ErpInsightConnectorErrors
+        expr: sum by (connector, code) (increase(erp_connector_errors_total{code=~"HOST_UNREACHABLE|TIMEOUT|AUTH_FAILED"}[10m])) > 5
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.connector }} errors: {{ $labels.code }}"
+          runbook: docs/observability.md#erpinsightconnectorerrors
+
+      - alert: ErpInsightExportFailures
+        expr: increase(erp_export_jobs_total{event="failed"}[30m]) > 3
+        labels: {severity: warning}
+        annotations:
+          summary: Several background exports failed
+          runbook: docs/observability.md#erpinsightexportfailures

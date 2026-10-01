@@ -1,0 +1,56 @@
+entity: Customer
+description: >-
+  Customer master data: customer name, segment, region, credit limit and the date the
+  customer was created. Contact details and bank/tax identifiers are deliberately
+  not exposed.
+source:
+  logical_name: analytics_customers
+  allowed_database_objects: [analytics_customers]
+synonyms: [customers, clients, accounts, buyers, customer master]
+classification: internal
+default_time_field: created_date
+dimensions:
+  - name: customer_id
+    field: customer_id
+    type: integer
+    description: Internal customer identifier.
+  - name: customer
+    field: customer_name
+    type: string
+    description: Customer name.
+    synonyms: [client, account, buyer]
+  - name: segment
+    field: segment
+    type: string
+    description: "Customer segment: Enterprise, Mid-Market or SMB."
+    synonyms: [customer group, tier, customer class]
+  - name: region
+    field: region_name
+    type: string
+    description: Home region of the customer.
+    synonyms: [territory, zone, area]
+measures:
+  - name: customer_count
+    field: customer_id
+    aggregation: count_distinct
+    type: integer
+    format: integer
+    description: Number of customers.
+    synonyms: [number of customers, customer base]
+  - name: total_credit_limit
+    field: credit_limit
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Total approved credit limits.
+    synonyms: [credit exposure limit, credit lines]
+time_fields:
+  - name: created_date
+    field: created_date
+    type: date
+    default: true
+    description: Date the customer record was created (customer since).
+security:
+  required_filters:
+    - tenant_code
+  forbidden_fields: [bank_account, customer_bank_account, tax_id, email, phone, payment_token]

@@ -1,0 +1,112 @@
+{
+  "$defs": {
+    "ConversationItem": {
+      "description": "One chat in the history list: its first question stands for the whole chat.",
+      "properties": {
+        "connection_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Connection Id"
+        },
+        "connection_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Connection Name"
+        },
+        "conversation_id": {
+          "format": "uuid",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "last_activity_at": {
+          "format": "date-time",
+          "title": "Last Activity At",
+          "type": "string"
+        },
+        "last_question": {
+          "title": "Last Question",
+          "type": "string"
+        },
+        "last_status": {
+          "title": "Last Status",
+          "type": "string"
+        },
+        "question_count": {
+          "title": "Question Count",
+          "type": "integer"
+        },
+        "saved": {
+          "title": "Saved",
+          "type": "boolean"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "title",
+        "question_count",
+        "last_question",
+        "last_status",
+        "connection_id",
+        "connection_name",
+        "saved",
+        "started_at",
+        "last_activity_at"
+      ],
+      "title": "ConversationItem",
+      "type": "object"
+    }
+  },
+  "$id": "https://erp-insight-ai.local/contracts/history-conversation-page.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ConversationItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "limit": {
+      "title": "Limit",
+      "type": "integer"
+    },
+    "offset": {
+      "title": "Offset",
+      "type": "integer"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "limit",
+    "offset"
+  ],
+  "title": "ConversationPage",
+  "type": "object"
+}

@@ -1,0 +1,130 @@
+# Default deny, then allow only the flows the platform needs.
+#   ingress controller -> api:8000
+#   api/worker/scheduler/migrate -> redis, qdrant, model servers, PostgreSQL, DNS
+#   api/worker -> customer ERP databases (ERP_DATABASE_CIDRS: REPLACE per deployment)
+# Egress to the internet (including cloud metadata 169.254.169.254) is denied.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-ingress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: erp-insight-api}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ingress-nginx}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: monitoring}   # Prometheus scrape
+      ports:
+        - {protocol: TCP, port: 8000}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-egress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [erp-insight-api, erp-insight-worker, erp-insight-scheduler, erp-insight-migrate]
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: erp-insight-redis}
+      ports: [{protocol: TCP, port: 6379}]
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: erp-insight-qdrant}
+      ports: [{protocol: TCP, port: 6333}]
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/component: model-server}
+      ports: [{protocol: TCP, port: 8000}]
+    # Application PostgreSQL (managed service): REPLACE with its address range.
+    - to:
+        - ipBlock: {cidr: 10.0.100.0/24}
+      ports: [{protocol: TCP, port: 5432}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: erp-database-egress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [erp-insight-api, erp-insight-worker]
+  policyTypes: [Egress]
+  egress:
+    # Customer ERP databases / read replicas: REPLACE with the real ranges and ports.
+    - to:
+        - ipBlock: {cidr: 10.20.0.0/16}
+      ports:
+        - {protocol: TCP, port: 5432}   # PostgreSQL
+        - {protocol: TCP, port: 3306}   # MySQL / MariaDB
+        - {protocol: TCP, port: 1433}   # SQL Server
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: data-services-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [erp-insight-redis, erp-insight-qdrant]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [erp-insight-api, erp-insight-worker, erp-insight-scheduler]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: model-server-ingress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/component: model-server}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [erp-insight-api, erp-insight-worker]
+      ports: [{protocol: TCP, port: 8000}]

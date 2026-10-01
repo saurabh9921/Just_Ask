@@ -1,0 +1,30 @@
+# ERP Insight AI - Kubernetes base (kubectl apply -k infrastructure/kubernetes).
+# Before applying: create the `erp-insight-secrets` Secret and the `erp-insight-tls`
+# certificate, replace the REPLACE_* values (extension ID, host, network ranges) and
+# pin your registry and image tags below. Full procedure: docs/deployment.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: erp-insight
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - extension-config.yaml
+  - storage-and-rbac.yaml
+  - redis.yaml
+  - qdrant.yaml
+  - migrate-job.yaml
+  - api-deployment.yaml
+  - worker-deployment.yaml
+  - ingress.yaml
+  - networkpolicies.yaml
+images:
+  - name: erp-insight-api
+    newName: registry.example.com/erp-insight/erp-insight-api
+    newTag: "0.1.0"
+  - name: erp-insight-worker
+    newName: registry.example.com/erp-insight/erp-insight-worker
+    newTag: "0.1.0"

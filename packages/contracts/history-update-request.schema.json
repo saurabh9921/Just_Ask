@@ -1,0 +1,16 @@
+{
+  "$id": "https://erp-insight-ai.local/contracts/history-update-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "saved": {
+      "title": "Saved",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "saved"
+  ],
+  "title": "HistoryUpdate",
+  "type": "object"
+}

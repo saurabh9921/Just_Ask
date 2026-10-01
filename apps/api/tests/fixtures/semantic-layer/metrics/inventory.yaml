@@ -1,0 +1,21 @@
+metrics:
+  - name: below_minimum_rate
+    entity: Inventory
+    description: Share of stock positions (product x warehouse) below minimum stock.
+    expression: {op: percent_of, left: products_below_minimum, right: position_count}
+    format: percent
+    synonyms: [stock-out risk rate, low stock percentage]
+
+  - name: stock_value_per_sku
+    entity: Inventory
+    description: Average stock value per distinct SKU.
+    expression: {op: divide, left: stock_value, right: sku_count}
+    format: currency
+    synonyms: [average inventory value per item]
+
+  - name: stock_cover_ratio
+    entity: Inventory
+    description: On-hand quantity divided by minimum stock (1.0 = exactly at minimum).
+    expression: {op: divide, left: on_hand_quantity, right: minimum_stock}
+    format: decimal
+    synonyms: [stock coverage, cover ratio]

@@ -1,0 +1,114 @@
+entity: Invoice
+description: >-
+  Accounts receivable: customer invoices with due dates, amounts paid and
+  outstanding, and overdue status computed against the reporting date. Use for
+  overdue payments, receivables and collection questions.
+source:
+  logical_name: analytics_invoices
+  allowed_database_objects: [analytics_invoices]
+synonyms: [invoices, receivables, accounts receivable, AR, billing, customer invoices]
+classification: confidential
+default_time_field: invoice_date
+dimensions:
+  - name: invoice_number
+    field: invoice_number
+    type: string
+    description: Invoice number such as INV-200001.
+    synonyms: [invoice no, bill number]
+  - name: order_id
+    field: order_id
+    type: integer
+    description: Sales order the invoice was raised for.
+  - name: customer_id
+    field: customer_id
+    type: integer
+    description: Internal customer identifier.
+  - name: customer
+    field: customer_name
+    type: string
+    description: Invoiced customer.
+    synonyms: [client, account, debtor, bill-to]
+  - name: region
+    field: region_name
+    type: string
+    description: Customer region.
+    synonyms: [territory, zone, area]
+  - name: status
+    field: status
+    type: string
+    description: "Invoice status: open, partially_paid or paid."
+    synonyms: [invoice status, payment status]
+  - name: is_overdue
+    field: is_overdue
+    type: integer
+    description: 1 when an unpaid balance is past its due date, otherwise 0.
+    synonyms: [overdue, past due, late payment, delinquent]
+  - name: days_overdue
+    field: days_overdue
+    type: integer
+    description: Days past due for overdue invoices, 0 otherwise.
+    synonyms: [days past due, DPD, arrears days]
+measures:
+  - name: invoiced_amount
+    field: amount
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Total invoiced value.
+    synonyms: [billed amount, invoice value, billings]
+  - name: paid_amount
+    field: paid_amount
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Amount received against the invoices.
+    synonyms: [collections, payments received, cash collected]
+  - name: outstanding_amount
+    field: outstanding_amount
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Unpaid balance.
+    synonyms: [open balance, receivables balance, AR balance, amount due]
+  - name: overdue_amount
+    field: overdue_amount
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Unpaid balance that is past due.
+    synonyms: [past due amount, overdue balance, arrears]
+  - name: invoice_count
+    field: invoice_id
+    aggregation: count_distinct
+    type: integer
+    format: integer
+    description: Number of invoices.
+    synonyms: [number of invoices]
+  - name: average_days_overdue
+    field: days_overdue
+    aggregation: avg
+    type: decimal
+    format: decimal
+    description: Average days past due.
+    synonyms: [average arrears days]
+  - name: max_days_overdue
+    field: days_overdue
+    aggregation: max
+    type: integer
+    format: integer
+    description: Longest days past due.
+    synonyms: [oldest overdue]
+time_fields:
+  - name: invoice_date
+    field: invoice_date
+    type: date
+    default: true
+    description: Invoice date.
+  - name: due_date
+    field: due_date
+    type: date
+    description: Payment due date.
+security:
+  required_filters:
+    - tenant_code
+  forbidden_fields: [payment_token, bank_account, customer_bank_account, tax_id]

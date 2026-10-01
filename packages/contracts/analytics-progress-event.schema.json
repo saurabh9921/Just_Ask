@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "AgentStep": {
+      "enum": [
+        "RECEIVE_QUESTION",
+        "CLASSIFY_INTENT",
+        "RESOLVE_DATA_SOURCE",
+        "DETECT_ANALYSIS_INTENT",
+        "RESOLVE_ENTITIES",
+        "RUN_ANALYSIS",
+        "RETRIEVE_SEMANTIC_CONTEXT",
+        "RETRIEVE_SIMILAR_EXAMPLES",
+        "BUILD_QUERY_PLAN",
+        "SELECT_FIELDS",
+        "VALIDATE_QUERY_PLAN",
+        "REQUEST_CLARIFICATION_IF_NEEDED",
+        "COMPILE_DIALECT_SQL",
+        "VALIDATE_SQL",
+        "ESTIMATE_COST",
+        "EXECUTE_READONLY_QUERY",
+        "FORMAT_RESULT",
+        "VALIDATE_RESULT",
+        "GENERATE_EXPLANATION",
+        "STORE_AUDIT_EVENT",
+        "COMPLETE"
+      ],
+      "title": "AgentStep",
+      "type": "string"
+    }
+  },
+  "$id": "https://erp-insight-ai.local/contracts/analytics-progress-event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+    },
+    "elapsed_ms": {
+      "title": "Elapsed Ms",
+      "type": "number"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "query_id": {
+      "format": "uuid",
+      "title": "Query Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "started",
+        "completed",
+        "failed",
+        "skipped"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "step": {
+      "$ref": "#/$defs/AgentStep"
+    }
+  },
+  "required": [
+    "query_id",
+    "step",
+    "status",
+    "message",
+    "elapsed_ms"
+  ],
+  "title": "ProgressEvent",
+  "type": "object"
+}

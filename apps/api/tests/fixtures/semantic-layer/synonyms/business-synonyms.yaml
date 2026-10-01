@@ -1,0 +1,164 @@
+# Business glossary: maps everyday ERP vocabulary to governed semantic objects.
+terms:
+  - term: revenue
+    definition: Net sales value after discounts, recognised on sales orders.
+    synonyms: [turnover, sales, net sales, sales value, income from sales]
+    maps_to: {entity: SalesOrder, measure: total_sales}
+  - term: gross sales
+    definition: Sales value before discounts.
+    synonyms: [gross revenue, list sales]
+    maps_to: {entity: SalesOrder, measure: gross_sales}
+  - term: discount
+    definition: Price reductions granted on sales orders.
+    synonyms: [rebate, markdown, price reduction]
+    maps_to: {entity: SalesOrder, measure: total_discount}
+  - term: number of orders
+    definition: Count of distinct sales orders.
+    synonyms: [order count, order volume, orders]
+    maps_to: {entity: SalesOrder, measure: order_count}
+  - term: average order value
+    definition: Net sales divided by the number of orders.
+    synonyms: [AOV, average ticket, average order size]
+    maps_to: {entity: SalesOrder, metric: average_order_value}
+  - term: discount rate
+    definition: Discounts as a percentage of gross sales.
+    synonyms: [discount percentage]
+    maps_to: {entity: SalesOrder, metric: discount_rate}
+  - term: open order
+    definition: A sales order with status open or processing (not yet shipped).
+    synonyms: [backlog, open sales order, pending order, unfulfilled order]
+    maps_to: {entity: SalesOrder, dimension: status}
+  - term: order age
+    definition: Days an order has been open (or took to close).
+    synonyms: [days open, ageing, aging]
+    maps_to: {entity: SalesOrder, dimension: days_open}
+  - term: region
+    definition: Sales region of the selling branch (North, South, East, West).
+    synonyms: [territory, zone, area, sales territory]
+    maps_to: {entity: SalesOrder, dimension: region}
+  - term: branch
+    definition: Selling branch or sales office.
+    synonyms: [office, sales office, store, location]
+    maps_to: {entity: SalesOrder, dimension: branch}
+  - term: best-selling products
+    definition: Products ranked by net sales (or units sold) over a period.
+    synonyms: [top products, top sellers, highest selling products, best sellers]
+    maps_to: {entity: SalesLine, measure: total_sales}
+  - term: units sold
+    definition: Quantity of product sold on order lines.
+    synonyms: [quantity sold, sales volume, volume]
+    maps_to: {entity: SalesLine, measure: units_sold}
+  - term: cost of goods sold
+    definition: Cost of the products sold.
+    synonyms: [COGS, cost of sales]
+    maps_to: {entity: SalesLine, measure: total_cost}
+  - term: gross profit
+    definition: Net sales minus cost of goods sold.
+    synonyms: [gross margin value, profit]
+    maps_to: {entity: SalesLine, measure: gross_profit}
+  - term: gross margin
+    definition: Gross profit as a percentage of net sales.
+    synonyms: [margin percentage, margin %]
+    maps_to: {entity: SalesLine, metric: gross_margin_pct}
+  - term: product category
+    definition: Grouping of products into families.
+    synonyms: [product group, product family, product line]
+    maps_to: {entity: SalesLine, dimension: category}
+  - term: stock on hand
+    definition: Units currently in the warehouse.
+    synonyms: [inventory level, QOH, available stock, stock level]
+    maps_to: {entity: Inventory, measure: on_hand_quantity}
+  - term: minimum stock
+    definition: The minimum (reorder) stock level for a product in a warehouse.
+    synonyms: [reorder point, reorder level, safety stock, min stock]
+    maps_to: {entity: Inventory, measure: minimum_stock}
+  - term: below minimum stock
+    definition: Stock positions whose on-hand quantity is below the minimum stock level.
+    synonyms: [low stock, understocked, needs reorder, stock-out risk]
+    maps_to: {entity: Inventory, dimension: below_minimum}
+  - term: inventory value
+    definition: Stock on hand valued at unit cost.
+    synonyms: [stock value, stock valuation]
+    maps_to: {entity: Inventory, measure: stock_value}
+  - term: warehouse
+    definition: Distribution centre or storage location holding stock.
+    synonyms: [DC, depot, plant, storage location]
+    maps_to: {entity: Inventory, dimension: warehouse}
+  - term: stock movement
+    definition: A receipt, shipment, adjustment or transfer that changes stock.
+    synonyms: [inventory movement, goods movement, stock transaction]
+    maps_to: {entity: InventoryMovement, measure: net_quantity}
+  - term: goods receipt
+    definition: Stock received into a warehouse.
+    synonyms: [GRN, receipts, inbound]
+    maps_to: {entity: InventoryMovement, measure: inbound_quantity}
+  - term: goods issue
+    definition: Stock shipped or issued out of a warehouse.
+    synonyms: [shipments, outbound, issues]
+    maps_to: {entity: InventoryMovement, measure: outbound_quantity}
+  - term: customer segment
+    definition: Customer classification (Enterprise, Mid-Market, SMB).
+    synonyms: [customer tier, customer group]
+    maps_to: {entity: Customer, dimension: segment}
+  - term: accounts receivable
+    definition: Unpaid customer invoice balances.
+    synonyms: [AR, receivables, open balance, amount due]
+    maps_to: {entity: Invoice, measure: outstanding_amount}
+  - term: overdue payment
+    definition: An unpaid invoice balance past its due date.
+    synonyms: [past due, late payment, delinquent invoice, arrears]
+    maps_to: {entity: Invoice, dimension: is_overdue}
+  - term: overdue amount
+    definition: Outstanding balance that is past due.
+    synonyms: [past due amount, overdue balance]
+    maps_to: {entity: Invoice, measure: overdue_amount}
+  - term: collections
+    definition: Payments received from customers against invoices.
+    synonyms: [cash collected, payments received]
+    maps_to: {entity: Invoice, measure: paid_amount}
+  - term: days past due
+    definition: Number of days an invoice balance is overdue.
+    synonyms: [DPD, days overdue]
+    maps_to: {entity: Invoice, dimension: days_overdue}
+  - term: supplier
+    definition: Vendor supplying goods on purchase orders.
+    synonyms: [vendor, provider]
+    maps_to: {entity: PurchaseOrder, dimension: supplier}
+  - term: spend
+    definition: Value of purchase orders placed.
+    synonyms: [purchase spend, procurement spend, purchase value]
+    maps_to: {entity: PurchaseOrder, measure: purchase_value}
+  - term: supplier lead time
+    definition: Days from placing a purchase order to receiving the goods.
+    synonyms: [lead time, delivery time]
+    maps_to: {entity: PurchaseOrder, measure: average_lead_time_days}
+  - term: late delivery
+    definition: A purchase order received after (or still open past) its expected date.
+    synonyms: [delayed delivery, supplier delay]
+    maps_to: {entity: PurchaseOrder, dimension: is_late}
+
+abbreviations:
+  - {abbreviation: SO, expansion: sales order}
+  - {abbreviation: PO, expansion: purchase order}
+  - {abbreviation: GRN, expansion: goods received note}
+  - {abbreviation: AR, expansion: accounts receivable}
+  - {abbreviation: AP, expansion: accounts payable}
+  - {abbreviation: SKU, expansion: stock keeping unit}
+  - {abbreviation: UOM, expansion: unit of measure}
+  - {abbreviation: QOH, expansion: quantity on hand}
+  - {abbreviation: COGS, expansion: cost of goods sold}
+  - {abbreviation: AOV, expansion: average order value}
+  - {abbreviation: ASP, expansion: average selling price}
+  - {abbreviation: DSO, expansion: days sales outstanding}
+  - {abbreviation: DPD, expansion: days past due}
+  - {abbreviation: OTIF, expansion: on time in full}
+  - {abbreviation: YTD, expansion: year to date}
+  - {abbreviation: QTD, expansion: quarter to date}
+  - {abbreviation: MTD, expansion: month to date}
+  - {abbreviation: MoM, expansion: month over month}
+  - {abbreviation: QoQ, expansion: quarter over quarter}
+  - {abbreviation: YoY, expansion: year over year}
+  - {abbreviation: DC, expansion: distribution centre}
+  - {abbreviation: WH, expansion: warehouse}
+  - {abbreviation: GM, expansion: gross margin}
+  - {abbreviation: KPI, expansion: key performance indicator}

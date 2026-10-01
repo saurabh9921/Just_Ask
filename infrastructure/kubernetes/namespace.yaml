@@ -1,0 +1,13 @@
+# Namespace with the "restricted" Pod Security Standard enforced: every pod must run
+# as non-root, drop all capabilities, use a RuntimeDefault seccomp profile and forbid
+# privilege escalation (all workloads in this directory comply).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: erp-insight
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

@@ -1,0 +1,129 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "erp-insight-api"
+version = "0.1.0"
+description = "ERP Insight AI - read-only, governed ERP analytics API"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "fastapi>=0.141,<1.0",
+  "uvicorn[standard]>=0.35",
+  "pydantic>=2.13,<3",
+  "pydantic-settings>=2.10",
+  "sqlalchemy[asyncio]>=2.0.54,<2.1",
+  "asyncpg>=0.30",
+  "alembic>=1.20",
+  "redis>=6.0",
+  "httpx>=0.28",
+  "prometheus-client>=0.22",
+  "celery[redis]>=5.5",
+  "opentelemetry-api>=1.36",
+  "opentelemetry-sdk>=1.36",
+  "opentelemetry-exporter-otlp-proto-http>=1.36",
+  "argon2-cffi>=23.1",
+  "pyjwt>=2.10",
+  "cryptography>=45",
+  "qdrant-client>=1.15",
+  "pyyaml>=6.0",
+  "sqlglot>=30",
+  "aiosqlite>=0.21",
+  # GA connectors (Phase 6). aioodbc needs unixODBC + Microsoft ODBC Driver 18 at runtime.
+  "aiomysql>=0.3",
+  "aioodbc>=0.5",
+]
+
+[project.optional-dependencies]
+# Foundation connectors (disabled unless ENABLE_FOUNDATION_CONNECTORS=true).
+oracle = ["oracledb>=3.0"]
+hana = ["sqlalchemy-hana>=4.0", "hdbcli>=2.20"]
+dev = [
+  "oracledb>=3.0",
+  "sqlalchemy-hana>=4.0",
+  "hdbcli>=2.20",
+  "pytest>=8.4",
+  "pytest-asyncio>=1.1",
+  "pytest-cov>=6.2",
+  "fakeredis>=2.30",
+  "mypy>=1.17",
+  "ruff>=0.12",
+  "celery-types>=0.23",
+  "types-PyYAML>=6.0",
+  "pip-audit>=2.7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# --------------------------------------------------------------------------
+# Ruff: formatter + linter
+# --------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["app/db/migrations/versions/*.py.mako"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "B", "UP", "N", "S", "BLE", "A", "C4", "DTZ", "T20",
+  "SIM", "RET", "PTH", "ASYNC", "RUF", "PL", "TRY", "LOG", "G",
+]
+ignore = [
+  "PLR0913",  # FastAPI dependencies legitimately take many params
+  "PLR0917",  # ...including positional ones
+  "TRY003",   # long messages in exception constructors are fine
+  "PLR2004",  # magic values are acceptable in tests / HTTP status codes
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S104", "S105", "S106", "S608", "PLR2004", "PLC0415", "TRY301", "E501"]
+"app/db/migrations/**" = ["N999", "E501"]
+# Dispatch tables (one branch per operator/period/grain) are clearer flat than split.
+"app/query/**" = ["PLR0911", "PLR0912"]
+"app/llm/mock_planner.py" = ["PLR0911", "PLR0912"]
+
+# --------------------------------------------------------------------------
+# mypy: strict everywhere
+# --------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+exclude = ["app/db/migrations/versions/"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# --------------------------------------------------------------------------
+# pytest
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+markers = [
+  "integration: requires live services (Postgres/Redis/Qdrant); skipped when unavailable",
+  "security: security regression tests",
+  "contract: DatabaseAdapter contract suite (runs for every connector)",
+  "performance: latency/memory budgets (docs/performance.md); fast, no Docker needed",
+  "eval: evaluation harness runs (sandbox, mock model)",
+]
+filterwarnings = [
+  "error::DeprecationWarning:app.*",
+  # In-memory Qdrant (tests) ignores payload indexes; real servers use them.
+  "ignore:Payload indexes have no effect in the local Qdrant:UserWarning",
+]
+addopts = "-ra --strict-markers"
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "erp_worker", "tests"]

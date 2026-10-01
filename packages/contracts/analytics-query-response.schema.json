@@ -1,0 +1,1634 @@
+{
+  "$defs": {
+    "AgentStep": {
+      "enum": [
+        "RECEIVE_QUESTION",
+        "CLASSIFY_INTENT",
+        "RESOLVE_DATA_SOURCE",
+        "DETECT_ANALYSIS_INTENT",
+        "RESOLVE_ENTITIES",
+        "RUN_ANALYSIS",
+        "RETRIEVE_SEMANTIC_CONTEXT",
+        "RETRIEVE_SIMILAR_EXAMPLES",
+        "BUILD_QUERY_PLAN",
+        "SELECT_FIELDS",
+        "VALIDATE_QUERY_PLAN",
+        "REQUEST_CLARIFICATION_IF_NEEDED",
+        "COMPILE_DIALECT_SQL",
+        "VALIDATE_SQL",
+        "ESTIMATE_COST",
+        "EXECUTE_READONLY_QUERY",
+        "FORMAT_RESULT",
+        "VALIDATE_RESULT",
+        "GENERATE_EXPLANATION",
+        "STORE_AUDIT_EVENT",
+        "COMPLETE"
+      ],
+      "title": "AgentStep",
+      "type": "string"
+    },
+    "AnalysisChartOut": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/$defs/ChartPointOut"
+          },
+          "title": "Data",
+          "type": "array"
+        },
+        "dimension": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dimension"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Metric"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "bar",
+                "line",
+                "pie",
+                "scatter"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "validation": {
+          "$ref": "#/$defs/ChartValidation"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "title": "AnalysisChartOut",
+      "type": "object"
+    },
+    "AnalysisOut": {
+      "properties": {
+        "chart": {
+          "$ref": "#/$defs/AnalysisChartOut"
+        },
+        "dimensions": {
+          "items": {
+            "$ref": "#/$defs/DimensionQuality"
+          },
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "entity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityOut"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "insights": {
+          "items": {
+            "$ref": "#/$defs/InsightOut"
+          },
+          "title": "Insights",
+          "type": "array"
+        },
+        "intent": {
+          "title": "Intent",
+          "type": "string"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricOut"
+          },
+          "title": "Metrics",
+          "type": "array"
+        },
+        "queries": {
+          "items": {
+            "$ref": "#/$defs/AnalysisQueryOut"
+          },
+          "title": "Queries",
+          "type": "array"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "unavailable": {
+          "items": {
+            "$ref": "#/$defs/UnavailableMetricOut"
+          },
+          "title": "Unavailable",
+          "type": "array"
+        },
+        "validation": {
+          "$ref": "#/$defs/AnalysisValidationOut"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "intent",
+        "validation"
+      ],
+      "title": "AnalysisOut",
+      "type": "object"
+    },
+    "AnalysisQueryOut": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "row_count": {
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "sql": {
+          "title": "Sql",
+          "type": "string"
+        },
+        "validated": {
+          "default": true,
+          "title": "Validated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label",
+        "sql",
+        "row_count"
+      ],
+      "title": "AnalysisQueryOut",
+      "type": "object"
+    },
+    "AnalysisValidationOut": {
+      "properties": {
+        "chart_validated": {
+          "title": "Chart Validated",
+          "type": "boolean"
+        },
+        "data_validated": {
+          "title": "Data Validated",
+          "type": "boolean"
+        },
+        "entity_filter_applied": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity Filter Applied"
+        },
+        "entity_resolved": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity Resolved"
+        },
+        "unsupported_claims": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unsupported Claims",
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "data_validated",
+        "chart_validated"
+      ],
+      "title": "AnalysisValidationOut",
+      "type": "object"
+    },
+    "AppliedFilterOut": {
+      "properties": {
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "op": {
+          "title": "Op",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value"
+        }
+      },
+      "required": [
+        "field",
+        "op",
+        "value"
+      ],
+      "title": "AppliedFilterOut",
+      "type": "object"
+    },
+    "AppliedFiltersOut": {
+      "properties": {
+        "date_window": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DateWindowOut"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "filters": {
+          "items": {
+            "$ref": "#/$defs/AppliedFilterOut"
+          },
+          "title": "Filters",
+          "type": "array"
+        },
+        "previous_window": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DateWindowOut"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "AppliedFiltersOut",
+      "type": "object"
+    },
+    "CacheInfoOut": {
+      "description": "Whether the rows came from the query-result cache (and how old they are).",
+      "properties": {
+        "age_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Age Seconds"
+        },
+        "hit": {
+          "default": false,
+          "title": "Hit",
+          "type": "boolean"
+        }
+      },
+      "title": "CacheInfoOut",
+      "type": "object"
+    },
+    "CanonicalType": {
+      "description": "Database-independent column types used by the semantic layer and UI.",
+      "enum": [
+        "string",
+        "integer",
+        "decimal",
+        "float",
+        "boolean",
+        "date",
+        "timestamp",
+        "time",
+        "json",
+        "binary",
+        "uuid",
+        "other"
+      ],
+      "title": "CanonicalType",
+      "type": "string"
+    },
+    "ChartPointOut": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "ChartPointOut",
+      "type": "object"
+    },
+    "ChartSpec": {
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "series": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Series"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "type": {
+          "enum": [
+            "kpi",
+            "bar",
+            "grouped_bar",
+            "line",
+            "table",
+            "pie",
+            "scatter"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "validation": {
+          "$ref": "#/$defs/ChartValidation"
+        },
+        "x": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X"
+        },
+        "y": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Y",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "ChartSpec",
+      "type": "object"
+    },
+    "ChartValidation": {
+      "properties": {
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "valid": {
+          "default": true,
+          "title": "Valid",
+          "type": "boolean"
+        }
+      },
+      "title": "ChartValidation",
+      "type": "object"
+    },
+    "ColumnMeta": {
+      "properties": {
+        "format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValueFormat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "enum": [
+            "dimension",
+            "time",
+            "measure",
+            "previous",
+            "change",
+            "change_pct"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        },
+        "time_grain": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Grain"
+        },
+        "type": {
+          "$ref": "#/$defs/CanonicalType"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "kind",
+        "type"
+      ],
+      "title": "ColumnMeta",
+      "type": "object"
+    },
+    "ConnectionRef": {
+      "properties": {
+        "connector_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Connector Type"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "ConnectionRef",
+      "type": "object"
+    },
+    "CostOut": {
+      "properties": {
+        "estimated_cost": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Cost"
+        },
+        "estimated_rows": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Rows"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "CostOut",
+      "type": "object"
+    },
+    "DateWindowOut": {
+      "properties": {
+        "end_exclusive": {
+          "format": "date",
+          "title": "End Exclusive",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "start": {
+          "format": "date",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "start",
+        "end_exclusive",
+        "label"
+      ],
+      "title": "DateWindowOut",
+      "type": "object"
+    },
+    "DimensionQuality": {
+      "properties": {
+        "blank_count": {
+          "title": "Blank Count",
+          "type": "integer"
+        },
+        "distinct_values": {
+          "title": "Distinct Values",
+          "type": "integer"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "meaningful_ratio": {
+          "title": "Meaningful Ratio",
+          "type": "number"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "null_count": {
+          "title": "Null Count",
+          "type": "integer"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "role": {
+          "enum": [
+            "category",
+            "name",
+            "identifier",
+            "free_text",
+            "time"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        },
+        "usable": {
+          "title": "Usable",
+          "type": "boolean"
+        },
+        "weighted": {
+          "title": "Weighted",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "role",
+        "total",
+        "null_count",
+        "blank_count",
+        "distinct_values",
+        "meaningful_ratio",
+        "weighted",
+        "usable"
+      ],
+      "title": "DimensionQuality",
+      "type": "object"
+    },
+    "EntityOut": {
+      "description": "A business entity named in the question (\"pending metals co\").",
+      "properties": {
+        "candidates": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "filter_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Filter Field"
+        },
+        "keys": {
+          "items": {},
+          "title": "Keys",
+          "type": "array"
+        },
+        "match": {
+          "enum": [
+            "exact",
+            "normalized",
+            "id",
+            "ambiguous",
+            "suggestions",
+            "not_found"
+          ],
+          "title": "Match",
+          "type": "string"
+        },
+        "mention": {
+          "title": "Mention",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "resolved": {
+          "title": "Resolved",
+          "type": "boolean"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "mention",
+        "resolved",
+        "match"
+      ],
+      "title": "EntityOut",
+      "type": "object"
+    },
+    "ExplanationOut": {
+      "properties": {
+        "highlights": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Highlights",
+          "type": "array"
+        },
+        "source": {
+          "enum": [
+            "llm",
+            "system"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary",
+        "source"
+      ],
+      "title": "ExplanationOut",
+      "type": "object"
+    },
+    "FormattedResult": {
+      "properties": {
+        "chart": {
+          "$ref": "#/$defs/ChartSpec"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/ColumnMeta"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "kpis": {
+          "items": {
+            "$ref": "#/$defs/KpiCard"
+          },
+          "title": "Kpis",
+          "type": "array"
+        },
+        "quality": {
+          "items": {
+            "$ref": "#/$defs/DimensionQuality"
+          },
+          "title": "Quality",
+          "type": "array"
+        },
+        "redacted_columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Redacted Columns",
+          "type": "array"
+        },
+        "row_count": {
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "rows": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows",
+        "row_count",
+        "truncated",
+        "kpis",
+        "chart"
+      ],
+      "title": "FormattedResult",
+      "type": "object"
+    },
+    "InsightOut": {
+      "properties": {
+        "kind": {
+          "default": "fact",
+          "enum": [
+            "fact",
+            "observation"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "metrics": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Metrics",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "InsightOut",
+      "type": "object"
+    },
+    "KpiCard": {
+      "properties": {
+        "change": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Change"
+        },
+        "change_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Change Pct"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValueFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous"
+        },
+        "scope": {
+          "default": "value",
+          "enum": [
+            "value",
+            "total"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "value",
+        "format"
+      ],
+      "title": "KpiCard",
+      "type": "object"
+    },
+    "MetricOut": {
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValueFormat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "source": {
+          "const": "query_result",
+          "default": "query_result",
+          "title": "Source",
+          "type": "string"
+        },
+        "validated": {
+          "default": true,
+          "title": "Validated",
+          "type": "boolean"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "value",
+        "query"
+      ],
+      "title": "MetricOut",
+      "type": "object"
+    },
+    "QueryErrorOut": {
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "status_code": {
+          "default": 500,
+          "title": "Status Code",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "QueryErrorOut",
+      "type": "object"
+    },
+    "SecurityScopeOut": {
+      "properties": {
+        "read_only": {
+          "default": true,
+          "title": "Read Only",
+          "type": "boolean"
+        },
+        "row_filter_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Row Filter Fields",
+          "type": "array"
+        },
+        "tenant": {
+          "title": "Tenant",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant"
+      ],
+      "title": "SecurityScopeOut",
+      "type": "object"
+    },
+    "StepRecord": {
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "failed",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "step": {
+          "$ref": "#/$defs/AgentStep"
+        }
+      },
+      "required": [
+        "step",
+        "status",
+        "duration_ms"
+      ],
+      "title": "StepRecord",
+      "type": "object"
+    },
+    "TimingsOut": {
+      "properties": {
+        "execution_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Ms"
+        },
+        "llm_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Llm Ms"
+        },
+        "total_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Ms"
+        }
+      },
+      "title": "TimingsOut",
+      "type": "object"
+    },
+    "UnavailableMetricOut": {
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "reason"
+      ],
+      "title": "UnavailableMetricOut",
+      "type": "object"
+    },
+    "UsageOut": {
+      "description": "Model calls and tokens spent on this question (0 tokens for the mock provider).",
+      "properties": {
+        "completion_tokens": {
+          "default": 0,
+          "title": "Completion Tokens",
+          "type": "integer"
+        },
+        "llm_calls": {
+          "default": 0,
+          "title": "Llm Calls",
+          "type": "integer"
+        },
+        "prompt_tokens": {
+          "default": 0,
+          "title": "Prompt Tokens",
+          "type": "integer"
+        }
+      },
+      "title": "UsageOut",
+      "type": "object"
+    },
+    "ValidationOut": {
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "corrections": {
+          "default": 0,
+          "title": "Corrections",
+          "type": "integer"
+        },
+        "plan_valid": {
+          "title": "Plan Valid",
+          "type": "boolean"
+        },
+        "sql_validated": {
+          "title": "Sql Validated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "plan_valid",
+        "sql_validated"
+      ],
+      "title": "ValidationOut",
+      "type": "object"
+    },
+    "ValueFormat": {
+      "enum": [
+        "currency",
+        "integer",
+        "decimal",
+        "percent",
+        "date",
+        "text"
+      ],
+      "title": "ValueFormat",
+      "type": "string"
+    }
+  },
+  "$id": "https://erp-insight-ai.local/contracts/analytics-query-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "analysis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnalysisOut"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "applied_filters": {
+      "$ref": "#/$defs/AppliedFiltersOut"
+    },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    },
+    "cache": {
+      "$ref": "#/$defs/CacheInfoOut"
+    },
+    "clarification_question": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clarification Question"
+    },
+    "connection": {
+      "$ref": "#/$defs/ConnectionRef"
+    },
+    "cost": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CostOut"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "data_freshness": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Data Freshness"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/QueryErrorOut"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExplanationOut"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "intent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intent"
+    },
+    "plan": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Plan"
+    },
+    "previous_sql": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Sql"
+    },
+    "query_id": {
+      "format": "uuid",
+      "title": "Query Id",
+      "type": "string"
+    },
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "refusal_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Refusal Reason"
+    },
+    "replayed": {
+      "default": false,
+      "title": "Replayed",
+      "type": "boolean"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FormattedResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "rows_returned": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rows Returned"
+    },
+    "security_scope": {
+      "$ref": "#/$defs/SecurityScopeOut"
+    },
+    "semantic_version": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Semantic Version"
+    },
+    "source_entities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Source Entities",
+      "type": "array"
+    },
+    "sql": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sql"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "planned",
+        "clarification",
+        "refused",
+        "failed",
+        "cancelled"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/StepRecord"
+      },
+      "title": "Steps",
+      "type": "array"
+    },
+    "timings": {
+      "$ref": "#/$defs/TimingsOut"
+    },
+    "usage": {
+      "$ref": "#/$defs/UsageOut"
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationOut"
+    }
+  },
+  "required": [
+    "query_id",
+    "status",
+    "question",
+    "connection",
+    "security_scope",
+    "validation"
+  ],
+  "title": "QueryResponse",
+  "type": "object"
+}

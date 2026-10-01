@@ -1,0 +1,47 @@
+# Alembic migrations. Run (and wait for) this Job before rolling out a new API version:
+#   kubectl -n erp-insight delete job migrate --ignore-not-found
+#   kubectl -n erp-insight apply -k infrastructure/kubernetes   (re-creates the Job)
+#   kubectl -n erp-insight wait --for=condition=complete job/migrate --timeout=10m
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  labels:
+    app.kubernetes.io/name: erp-insight-migrate
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: erp-insight-migrate
+    spec:
+      restartPolicy: Never
+      serviceAccountName: erp-insight-app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: migrate
+          image: erp-insight-api:0.1.0
+          imagePullPolicy: IfNotPresent
+          args: [alembic, upgrade, head]
+          envFrom:
+            - configMapRef: {name: erp-insight-config}
+            - secretRef: {name: erp-insight-secrets}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}

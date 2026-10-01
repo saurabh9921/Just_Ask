@@ -1,0 +1,22 @@
+# Shared export volume (worker writes, API serves) and the workloads' service account.
+# ReadWriteMany is required when API and worker pods run on different nodes: use a
+# storage class that supports it (NFS/EFS/Azure Files/Filestore) - set storageClassName.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: erp-insight-exports
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests: {storage: 50Gi}
+---
+# No Kubernetes API access is needed by any workload; the token is not even mounted.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: erp-insight-app
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+automountServiceAccountToken: false

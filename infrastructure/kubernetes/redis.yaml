@@ -1,0 +1,77 @@
+# In-cluster Redis (rate limits, caches, Celery broker, one-time download tokens).
+# For production prefer a managed Redis/Valkey with TLS and point REDIS_URL at it,
+# then drop this file from kustomization.yaml. The password comes from the Secret.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  labels: &labels
+    app.kubernetes.io/name: erp-insight-redis
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: erp-insight-redis
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: redis
+          image: redis:8.8.3-alpine
+          args:
+            - sh
+            - -c
+            - >-
+              exec redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes
+              --maxmemory 512mb --maxmemory-policy volatile-lru
+              --rename-command FLUSHALL "" --rename-command FLUSHDB ""
+              --rename-command CONFIG "" --rename-command DEBUG ""
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: erp-insight-secrets, key: REDIS_PASSWORD}
+          ports:
+            - {name: redis, containerPort: 6379}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 768Mi}
+          readinessProbe:
+            exec:
+              command: [sh, -c, 'redis-cli -a "$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG']
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: redis}
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: {storage: 5Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app.kubernetes.io/name: erp-insight-redis
+  ports:
+    - {name: redis, port: 6379, targetPort: redis}

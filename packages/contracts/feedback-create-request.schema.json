@@ -1,0 +1,60 @@
+{
+  "$id": "https://erp-insight-ai.local/contracts/feedback-create-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "categories": {
+      "items": {
+        "enum": [
+          "accurate",
+          "helpful",
+          "fast",
+          "wrong_numbers",
+          "wrong_data_source",
+          "wrong_period",
+          "wrong_filter",
+          "missing_data",
+          "confusing",
+          "slow",
+          "other"
+        ],
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Categories",
+      "type": "array"
+    },
+    "comment": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Comment"
+    },
+    "query_id": {
+      "format": "uuid",
+      "title": "Query Id",
+      "type": "string"
+    },
+    "rating": {
+      "enum": [
+        -1,
+        1
+      ],
+      "title": "Rating",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "query_id",
+    "rating"
+  ],
+  "title": "FeedbackCreate",
+  "type": "object"
+}

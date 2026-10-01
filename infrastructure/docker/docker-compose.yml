@@ -1,0 +1,304 @@
+# ERP Insight AI - local development stack (CPU only, no GPU required).
+#
+#   cp .env.example .env            # from the repository root
+#   docker compose -f infrastructure/docker/docker-compose.yml --env-file .env up -d --build
+#
+# Optional LLM profiles:
+#   --profile ollama   CPU-friendly local models (developer mode)
+#   --profile vllm     GPU model serving (requires NVIDIA runtime)
+# With neither profile, set LLM_PROVIDER=mock.
+#
+# Networks:
+#   edge  - public-facing: nginx, grafana
+#   app   - api/worker/observability; has egress so the API can reach customer ERP DBs
+#   data  - postgres, redis, qdrant. Marked internal (no egress, no published
+#           ports) in docker-compose.prod.yml; left routable here so host-side
+#           integration tests can reach the 127.0.0.1-bound dev ports.
+
+name: erp-insight-ai
+
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: ${LOG_JSON:-true}
+  APP_DATABASE_URL: postgresql+asyncpg://${POSTGRES_APP_USER:-app}:${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD}@postgres:5432/${POSTGRES_APP_DB:-erp_insight}
+  REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD}@redis:6379/0
+  QDRANT_URL: http://qdrant:6333
+  QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+  ENCRYPTION_KEY_VERSION: ${ENCRYPTION_KEY_VERSION:-1}
+  ENCRYPTION_KEY_PREVIOUS: ${ENCRYPTION_KEY_PREVIOUS:-}
+  VAULT_ADDR: ${VAULT_ADDR:-}
+  VAULT_TOKEN: ${VAULT_TOKEN:-}
+  VAULT_TOKEN_FILE: ${VAULT_TOKEN_FILE:-}
+  VAULT_NAMESPACE: ${VAULT_NAMESPACE:-}
+  VAULT_TENANT_PREFIX: ${VAULT_TENANT_PREFIX:-erp-insight/{tenant}/}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+  LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+  LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434}
+  LLM_MODEL: ${LLM_MODEL:-your-local-model}
+  LLM_API_KEY: ${LLM_API_KEY:-}
+  EXTERNAL_LLM_ENABLED: ${EXTERNAL_LLM_ENABLED:-false}
+  EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-hashing}
+  EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+  EMBEDDING_MODEL: ${EMBEDDING_MODEL:-your-embedding-model}
+  EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-384}
+  RERANKER_ENABLED: ${RERANKER_ENABLED:-true}
+  RERANKER_PROVIDER: ${RERANKER_PROVIDER:-lexical}
+  RERANKER_BASE_URL: ${RERANKER_BASE_URL:-}
+  RERANKER_MODEL: ${RERANKER_MODEL:-your-reranker-model}
+  SEMANTIC_LAYER_PATH: /srv/semantic-layer
+  MAX_QUERY_ROWS: ${MAX_QUERY_ROWS:-1000}
+  MAX_QUERY_SECONDS: ${MAX_QUERY_SECONDS:-30}
+  MAX_AGENT_STEPS: ${MAX_AGENT_STEPS:-12}
+  QUERY_CACHE_TTL_SECONDS: ${QUERY_CACHE_TTL_SECONDS:-300}
+  METADATA_SYNC_MODE: celery
+  SQLITE_DATA_DIR: /srv/data/sqlite
+  ALLOW_INSECURE_CONNECTION_TLS: ${ALLOW_INSECURE_CONNECTION_TLS:-}
+  CONNECTOR_CONNECT_TIMEOUT_SECONDS: ${CONNECTOR_CONNECT_TIMEOUT_SECONDS:-10}
+  # Phase 6: connectors, performance controls, caching, exports
+  ENABLE_FOUNDATION_CONNECTORS: ${ENABLE_FOUNDATION_CONNECTORS:-false}
+  SQLSERVER_ODBC_DRIVER: ${SQLSERVER_ODBC_DRIVER:-ODBC Driver 18 for SQL Server}
+  CONNECTOR_BREAKER_FAILURES: ${CONNECTOR_BREAKER_FAILURES:-5}
+  CONNECTOR_BREAKER_RESET_SECONDS: ${CONNECTOR_BREAKER_RESET_SECONDS:-30}
+  CONNECTOR_QUEUE_TIMEOUT_SECONDS: ${CONNECTOR_QUEUE_TIMEOUT_SECONDS:-10}
+  QUERY_RATE_LIMIT_PER_TENANT_PER_MINUTE: ${QUERY_RATE_LIMIT_PER_TENANT_PER_MINUTE:-600}
+  QUERY_RESULT_CACHE_ENABLED: ${QUERY_RESULT_CACHE_ENABLED:-true}
+  EXPORT_DIR: /srv/data/exports
+  EXPORT_MAX_ROWS: ${EXPORT_MAX_ROWS:-100000}
+  EXPORT_TTL_SECONDS: ${EXPORT_TTL_SECONDS:-3600}
+  EXPORT_MAX_ACTIVE_PER_USER: ${EXPORT_MAX_ACTIVE_PER_USER:-2}
+  OTEL_ENABLED: ${OTEL_ENABLED:-false}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+services:
+  # ------------------------------------------------------------------ data
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_APP_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_APP_DB:-erp_insight}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"   # dev only: integration tests
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+
+  redis:
+    image: redis:8.8.3-alpine
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD}"]
+    volumes:
+      - redis-data:/data
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"      # dev only: integration tests
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    networks: [data]
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-}
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT__LOG_LEVEL: INFO
+    volumes:
+      - qdrant-data:/qdrant/storage
+      - ../qdrant/config.yaml:/qdrant/config/production.yaml:ro
+    ports:
+      - "127.0.0.1:${QDRANT_HOST_PORT:-6333}:6333"     # dev only: integration tests
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+
+  # ------------------------------------------------------------ application
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: erp-insight-api:${IMAGE_TAG:-dev}
+    command: ["alembic", "upgrade", "head"]
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [data]
+
+  api:
+    image: erp-insight-api:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      # api is reachable only from nginx on the app network
+      FORWARDED_ALLOW_IPS: "*"
+    volumes:
+      - exports-data:/srv/data/exports   # written by the worker, served by the api
+      # Your semantic layer (edited on the host; reloaded automatically, re-ingest after edits)
+      - ${SEMANTIC_LAYER_DIR:-../../semantic-layer}:/srv/semantic-layer:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks: [app, data]
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: apps/worker/Dockerfile
+    image: erp-insight-worker:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    environment: *app-env
+    volumes:
+      - exports-data:/srv/data/exports
+      - ${SEMANTIC_LAYER_DIR:-../../semantic-layer}:/srv/semantic-layer:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks: [app, data]
+
+  # Periodic tasks (export expiry purge). Exactly ONE beat instance per deployment.
+  scheduler:
+    image: erp-insight-worker:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    environment: *app-env
+    command: ["celery", "-A", "erp_worker.main:celery_app", "beat", "--loglevel", "INFO",
+              "--schedule", "/tmp/celerybeat-schedule"]
+    healthcheck:
+      disable: true
+    depends_on:
+      worker:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks: [data]
+
+  nginx:
+    image: nginx:1.30.5-alpine
+    restart: unless-stopped
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../nginx/snippets:/etc/nginx/snippets:ro
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [edge, app]
+
+  # --------------------------------------------------------- observability
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks: [app]
+
+  grafana:
+    image: grafana/grafana:13.2.2
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:${GRAFANA_HOST_PORT:-3000}:3000"
+    depends_on: [prometheus]
+    networks: [edge, app]
+
+  # ------------------------------------------------------- local LLM (opt-in)
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:0.34.3
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+    networks: [data, app]   # app network: needs egress to pull models
+
+  vllm:
+    profiles: ["vllm"]
+    image: vllm/vllm-openai:v0.30.0
+    restart: unless-stopped
+    # The model is configuration, never hardcoded. VLLM_MODEL is a HF repo id or local path.
+    command:
+      - --model=${VLLM_MODEL:-SET_VLLM_MODEL_IN_.env}
+      - --served-model-name=${LLM_MODEL:-local-model}
+      - --api-key=${LLM_API_KEY:-SET_LLM_API_KEY_IN_.env}
+      - --max-model-len=${VLLM_MAX_MODEL_LEN:-16384}
+      - --gpu-memory-utilization=${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+      - --disable-log-requests
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - vllm-cache:/root/.cache/huggingface
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${VLLM_GPU_COUNT:-1}
+              capabilities: [gpu]
+    networks: [data, app]   # app network: needs egress to download weights
+
+networks:
+  edge: {}
+  app: {}
+  data: {}
+
+volumes:
+  postgres-data: {}
+  exports-data: {}
+  redis-data: {}
+  qdrant-data: {}
+  prometheus-data: {}
+  grafana-data: {}
+  ollama-data: {}
+  vllm-cache: {}

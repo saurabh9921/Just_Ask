@@ -1,0 +1,88 @@
+entity: PurchaseOrder
+description: >-
+  Purchase orders placed with suppliers: order, expected and received dates, value,
+  lateness and lead time. Use for supplier performance, open POs and spend.
+source:
+  logical_name: analytics_purchase_orders
+  allowed_database_objects: [analytics_purchase_orders]
+synonyms: [purchase orders, POs, purchasing, procurement, buying, supplier orders]
+classification: internal
+default_time_field: order_date
+dimensions:
+  - name: po_number
+    field: po_number
+    type: string
+    description: Purchase order number such as PO-400001.
+    synonyms: [PO number, purchase order number]
+  - name: supplier
+    field: supplier_name
+    type: string
+    description: Supplier name.
+    synonyms: [vendor, seller, provider]
+  - name: supplier_country
+    field: supplier_country
+    type: string
+    description: Supplier country.
+    synonyms: [vendor country, country of origin]
+  - name: warehouse
+    field: warehouse_name
+    type: string
+    description: Receiving warehouse.
+    synonyms: [location, depot, DC, plant]
+  - name: status
+    field: status
+    type: string
+    description: "PO status: open or received."
+    synonyms: [PO status]
+  - name: is_late
+    field: is_late
+    type: integer
+    description: 1 when received after the expected date, or not yet received and past due.
+    synonyms: [late delivery, delayed, overdue delivery]
+measures:
+  - name: purchase_value
+    field: total_amount
+    aggregation: sum
+    type: decimal
+    format: currency
+    description: Total purchase order value.
+    synonyms: [spend, purchase spend, procurement spend, PO value]
+  - name: po_count
+    field: po_id
+    aggregation: count_distinct
+    type: integer
+    format: integer
+    description: Number of purchase orders.
+    synonyms: [number of POs, number of purchase orders]
+  - name: late_po_count
+    field: is_late
+    aggregation: sum
+    type: integer
+    format: integer
+    description: Number of late purchase orders.
+    synonyms: [late deliveries, delayed POs]
+  - name: average_lead_time_days
+    field: lead_time_days
+    aggregation: avg
+    type: decimal
+    format: decimal
+    description: Average days from order to receipt (received POs only).
+    synonyms: [lead time, supplier lead time, delivery time]
+time_fields:
+  - name: order_date
+    field: order_date
+    type: date
+    default: true
+    description: PO order date.
+  - name: expected_date
+    field: expected_date
+    type: date
+    description: Expected delivery date.
+  - name: received_date
+    field: received_date
+    type: date
+    description: Actual receipt date (goods receipt).
+security:
+  required_filters:
+    - tenant_code
+  forbidden_fields: [bank_account, tax_id]

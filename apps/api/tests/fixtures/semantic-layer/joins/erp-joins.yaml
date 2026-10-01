@@ -1,0 +1,30 @@
+# The ONLY joins the query compiler may generate. Anything else is rejected.
+# Note: the key "on" MUST be quoted - YAML 1.1 parses a bare `on:` as boolean true.
+joins:
+  - name: sales_line_to_order
+    from: SalesLine
+    to: SalesOrder
+    relationship: many_to_one
+    "on":
+      - {from_field: order_id, to_field: order_id}
+
+  - name: sales_order_to_customer
+    from: SalesOrder
+    to: Customer
+    relationship: many_to_one
+    "on":
+      - {from_field: customer_id, to_field: customer_id}
+
+  - name: invoice_to_customer
+    from: Invoice
+    to: Customer
+    relationship: many_to_one
+    "on":
+      - {from_field: customer_id, to_field: customer_id}
+
+  - name: invoice_to_sales_order
+    from: Invoice
+    to: SalesOrder
+    relationship: many_to_one
+    "on":
+      - {from_field: order_id, to_field: order_id}

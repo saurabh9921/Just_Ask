@@ -1,0 +1,30 @@
+# Derived sales metrics. Expressions combine measures of the same entity only;
+# there is no free-form SQL in the semantic layer.
+metrics:
+  - name: average_order_value
+    entity: SalesOrder
+    description: Net sales divided by the number of orders.
+    expression: {op: divide, left: total_sales, right: order_count}
+    format: currency
+    synonyms: [AOV, average order size, average ticket, mean order value]
+
+  - name: discount_rate
+    entity: SalesOrder
+    description: Discounts as a percentage of gross sales.
+    expression: {op: percent_of, left: total_discount, right: gross_sales}
+    format: percent
+    synonyms: [discount percentage, discount %, rebate rate]
+
+  - name: gross_margin_pct
+    entity: SalesLine
+    description: Gross profit as a percentage of net sales.
+    expression: {op: percent_of, left: gross_profit, right: total_sales}
+    format: percent
+    synonyms: [margin %, gross margin percentage, GM%]
+
+  - name: average_selling_price
+    entity: SalesLine
+    description: Net sales per unit sold.
+    expression: {op: divide, left: total_sales, right: units_sold}
+    format: currency
+    synonyms: [ASP, average price, price per unit]

@@ -1,0 +1,388 @@
+{
+  "$defs": {
+    "Comparison": {
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/DateRange"
+        },
+        "previous": {
+          "$ref": "#/$defs/DateRange"
+        }
+      },
+      "required": [
+        "current",
+        "previous"
+      ],
+      "title": "Comparison",
+      "type": "object"
+    },
+    "DateRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "pattern": "^([A-Z][A-Za-z0-9]{0,62}\\.)?[a-z][a-z0-9_]{0,62}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "n": {
+          "anyOf": [
+            {
+              "maximum": 3660,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N"
+        },
+        "relative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelativePeriod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "start": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        }
+      },
+      "title": "DateRange",
+      "type": "object"
+    },
+    "FilterOp": {
+      "enum": [
+        "eq",
+        "ne",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "in",
+        "not_in",
+        "between",
+        "contains",
+        "starts_with",
+        "is_null",
+        "is_not_null"
+      ],
+      "title": "FilterOp",
+      "type": "string"
+    },
+    "QueryFilter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "pattern": "^([A-Z][A-Za-z0-9]{0,62}\\.)?[a-z][a-z0-9_]{0,62}$",
+          "title": "Field",
+          "type": "string"
+        },
+        "op": {
+          "$ref": "#/$defs/FilterOp"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "field",
+        "op"
+      ],
+      "title": "QueryFilter",
+      "type": "object"
+    },
+    "RefusalReason": {
+      "enum": [
+        "FORBIDDEN_FIELD",
+        "SENSITIVE_FIELD",
+        "WRITE_NOT_ALLOWED",
+        "OUT_OF_SCOPE"
+      ],
+      "title": "RefusalReason",
+      "type": "string"
+    },
+    "RelativePeriod": {
+      "enum": [
+        "today",
+        "yesterday",
+        "last_7_days",
+        "last_30_days",
+        "last_90_days",
+        "this_week",
+        "last_week",
+        "this_month",
+        "last_month",
+        "this_quarter",
+        "last_quarter",
+        "quarter_before_last",
+        "last_6_months",
+        "last_12_months",
+        "this_year",
+        "year_to_date",
+        "last_year",
+        "last_n_days",
+        "last_n_months"
+      ],
+      "title": "RelativePeriod",
+      "type": "string"
+    },
+    "SortSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "pattern": "^([A-Z][A-Za-z0-9]{0,62}\\.)?[a-z][a-z0-9_]{0,62}$",
+          "title": "By",
+          "type": "string"
+        },
+        "direction": {
+          "default": "desc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ],
+      "title": "SortSpec",
+      "type": "object"
+    },
+    "TimeGrain": {
+      "enum": [
+        "day",
+        "week",
+        "month",
+        "quarter",
+        "year"
+      ],
+      "title": "TimeGrain",
+      "type": "string"
+    }
+  },
+  "$id": "https://erp-insight-ai.local/contracts/query-plan.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "clarification_question": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clarification Question"
+    },
+    "clarification_required": {
+      "default": false,
+      "title": "Clarification Required",
+      "type": "boolean"
+    },
+    "comparison": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Comparison"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "confidence": {
+      "default": 1.0,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "date_range": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DateRange"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "dimensions": {
+      "items": {
+        "pattern": "^([A-Z][A-Za-z0-9]{0,62}\\.)?[a-z][a-z0-9_]{0,62}$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Dimensions",
+      "type": "array"
+    },
+    "entity": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z][A-Za-z0-9]{0,62}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Entity"
+    },
+    "filters": {
+      "items": {
+        "$ref": "#/$defs/QueryFilter"
+      },
+      "maxItems": 20,
+      "title": "Filters",
+      "type": "array"
+    },
+    "limit": {
+      "default": 100,
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "measures": {
+      "items": {
+        "pattern": "^([A-Z][A-Za-z0-9]{0,62}\\.)?[a-z][a-z0-9_]{0,62}$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Measures",
+      "type": "array"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RefusalReason"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "refuse": {
+      "default": false,
+      "title": "Refuse",
+      "type": "boolean"
+    },
+    "sort": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SortSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "time_grain": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TimeGrain"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "QueryPlan",
+  "type": "object"
+}

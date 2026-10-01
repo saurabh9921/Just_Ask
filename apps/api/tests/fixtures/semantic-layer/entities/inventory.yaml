@@ -1,0 +1,169 @@
+entities:
+  - entity: Inventory
+    description: >-
+      Current stock position per product and warehouse: on-hand quantity, minimum
+      (reorder) stock level, whether stock is below minimum, and stock value at cost.
+      A snapshot; it has no date dimension.
+    source:
+      logical_name: analytics_inventory
+      allowed_database_objects: [analytics_inventory]
+    synonyms: [stock, inventory, stock levels, on hand, warehouse stock]
+    classification: internal
+    dimensions:
+      - name: product
+        field: product_name
+        type: string
+        description: Product name.
+        synonyms: [item, article, material]
+      - name: sku
+        field: sku
+        type: string
+        description: Stock keeping unit code.
+        synonyms: [item code, product code, part number]
+      - name: category
+        field: category
+        type: string
+        description: Product category.
+        synonyms: [product group, product family]
+      - name: warehouse
+        field: warehouse_name
+        type: string
+        description: Warehouse or distribution centre.
+        synonyms: [location, depot, plant, DC, distribution center, storage location]
+      - name: warehouse_code
+        field: warehouse_code
+        type: string
+        description: Warehouse code such as WH-01.
+        synonyms: [plant code, location code]
+      - name: region
+        field: region_name
+        type: string
+        description: Region of the warehouse.
+        synonyms: [territory, zone, area]
+      - name: below_minimum
+        field: below_min
+        type: integer
+        description: 1 when on-hand quantity is below the minimum stock level, otherwise 0.
+        synonyms: [below reorder point, below minimum stock, understocked, low stock]
+    measures:
+      - name: on_hand_quantity
+        field: on_hand_qty
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Units physically in stock.
+        synonyms: [stock on hand, quantity on hand, QOH, available stock]
+      - name: minimum_stock
+        field: min_stock_qty
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Minimum (reorder) stock level.
+        synonyms: [reorder level, safety stock, min stock, reorder point]
+      - name: products_below_minimum
+        field: below_min
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Number of product/warehouse positions below minimum stock.
+        synonyms: [low stock items, stock-out risks, items to reorder]
+      - name: stock_value
+        field: stock_value
+        aggregation: sum
+        type: decimal
+        format: currency
+        description: Inventory value at unit cost.
+        synonyms: [inventory value, stock valuation, value of stock]
+      - name: sku_count
+        field: sku
+        aggregation: count_distinct
+        type: integer
+        format: integer
+        description: Number of distinct SKUs.
+        synonyms: [number of products, number of SKUs]
+      - name: position_count
+        field: balance_id
+        aggregation: count
+        type: integer
+        format: integer
+        description: Number of product/warehouse stock positions.
+        synonyms: [stock positions]
+    security:
+      required_filters:
+        - tenant_code
+
+  - entity: InventoryMovement
+    description: >-
+      Stock movements (receipts, shipments, adjustments and transfers) per product and
+      warehouse. Quantity is signed: positive increases stock, negative decreases it.
+    source:
+      logical_name: analytics_inventory_movements
+      allowed_database_objects: [analytics_inventory_movements]
+    synonyms: [stock movements, inventory transactions, goods movements, stock history]
+    classification: internal
+    large_fact: true
+    default_time_field: movement_date
+    dimensions:
+      - name: movement_type
+        field: movement_type
+        type: string
+        description: "receipt, shipment, adjustment, transfer_in or transfer_out."
+        synonyms: [transaction type, movement kind]
+      - name: product
+        field: product_name
+        type: string
+        description: Product name.
+        synonyms: [item, article, material]
+      - name: sku
+        field: sku
+        type: string
+        description: Stock keeping unit code.
+        synonyms: [item code, product code]
+      - name: warehouse
+        field: warehouse_name
+        type: string
+        description: Warehouse of the movement.
+        synonyms: [location, depot, plant, DC]
+      - name: reference
+        field: reference
+        type: string
+        description: Movement document reference such as MV-300001.
+        synonyms: [document number, movement number]
+    measures:
+      - name: net_quantity
+        field: quantity
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Net change in stock (inbound minus outbound).
+        synonyms: [net movement, stock change]
+      - name: inbound_quantity
+        field: inbound_qty
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Units received or transferred in.
+        synonyms: [receipts, goods received, inflow]
+      - name: outbound_quantity
+        field: outbound_qty
+        aggregation: sum
+        type: integer
+        format: integer
+        description: Units shipped or transferred out.
+        synonyms: [issues, shipments, outflow, goods issued]
+      - name: movement_count
+        field: movement_id
+        aggregation: count
+        type: integer
+        format: integer
+        description: Number of movements.
+        synonyms: [number of movements, transactions]
+    time_fields:
+      - name: movement_date
+        field: movement_date
+        type: date
+        default: true
+        description: Date of the stock movement.
+    security:
+      required_filters:
+        - tenant_code

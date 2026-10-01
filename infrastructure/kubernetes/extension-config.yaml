@@ -1,0 +1,27 @@
+# Browser-extension facing configuration.
+#
+# CORS_ALLOWED_ORIGINS must list the published extension ID(s) only - the API refuses
+# wildcard CORS in production. It is injected into the API pods (api-deployment.yaml).
+#
+# `managed-policy.json` is a Chrome enterprise policy (ExtensionSettings + the
+# extension's managed storage schema) for force-installing the extension with the API
+# URL preset; distribute it through your MDM / Google Admin console, not from here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-insight-extension
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+data:
+  CORS_ALLOWED_ORIGINS: chrome-extension://REPLACE_WITH_EXTENSION_ID
+  managed-policy.json: |
+    {
+      "ExtensionSettings": {
+        "REPLACE_WITH_EXTENSION_ID": {
+          "installation_mode": "force_installed",
+          "update_url": "https://clients2.google.com/service/update2/crx",
+          "runtime_blocked_hosts": ["*://*"],
+          "runtime_allowed_hosts": ["https://erp-insight.example.com"]
+        }
+      }
+    }

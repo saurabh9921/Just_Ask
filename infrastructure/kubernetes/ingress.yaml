@@ -1,0 +1,36 @@
+# Public entry point (ingress-nginx). TLS terminates here; only /api/ and /health/
+# are routed, /metrics and /docs are never exposed. Annotations mirror the compose
+# nginx config: WebSocket timeouts, no buffering for SSE and export downloads.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erp-insight
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"   # analytics WebSocket
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"        # SSE + streamed exports
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    # Security headers are set by the API itself (every response); no snippets needed.
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [erp-insight.example.com]
+      secretName: erp-insight-tls
+  rules:
+    - host: erp-insight.example.com
+      http:
+        paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service: {name: api, port: {name: http}}
+          - path: /health/
+            pathType: Prefix
+            backend:
+              service: {name: api, port: {name: http}}

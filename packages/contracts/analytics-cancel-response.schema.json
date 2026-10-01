@@ -1,0 +1,26 @@
+{
+  "$id": "https://erp-insight-ai.local/contracts/analytics-cancel-response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "cancel_requested": {
+      "title": "Cancel Requested",
+      "type": "boolean"
+    },
+    "query_id": {
+      "format": "uuid",
+      "title": "Query Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query_id",
+    "status",
+    "cancel_requested"
+  ],
+  "title": "CancelResponse",
+  "type": "object"
+}

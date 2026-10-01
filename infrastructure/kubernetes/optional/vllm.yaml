@@ -1,0 +1,96 @@
+# OPTIONAL: vLLM on a GPU node pool (OpenAI-compatible API on :8000).
+# Apply with: kubectl -n erp-insight apply -f infrastructure/kubernetes/optional/vllm.yaml
+# The model is configuration: set VLLM_MODEL (a pre-downloaded path on the `models`
+# volume is recommended - the network policies deny internet egress). Match the
+# ConfigMap's LLM_MODEL to --served-model-name. Needs the NVIDIA device plugin.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  labels: &labels
+    app.kubernetes.io/name: erp-insight-vllm
+    app.kubernetes.io/component: model-server
+    app.kubernetes.io/part-of: erp-insight-ai
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: erp-insight-vllm
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      tolerations:
+        - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.30.0
+          args:
+            - --model=$(VLLM_MODEL)
+            - --served-model-name=local-model
+            - --max-model-len=16384
+            - --gpu-memory-utilization=0.90
+            - --api-key=$(LLM_API_KEY)
+          env:
+            - {name: VLLM_MODEL, value: /models/your-model}
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /tmp}
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef: {name: erp-insight-secrets, key: LLM_API_KEY}
+          ports:
+            - {name: http, containerPort: 8000}
+          resources:
+            requests: {cpu: "4", memory: 24Gi, nvidia.com/gpu: "1"}
+            limits: {cpu: "8", memory: 48Gi, nvidia.com/gpu: "1"}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+            failureThreshold: 60
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 600
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: models, mountPath: /models, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+            - {name: shm, mountPath: /dev/shm}
+      volumes:
+        - name: models
+          persistentVolumeClaim: {claimName: erp-insight-models}
+        - name: tmp
+          emptyDir: {sizeLimit: 10Gi}
+        - name: shm
+          emptyDir: {medium: Memory, sizeLimit: 8Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+spec:
+  selector:
+    app.kubernetes.io/name: erp-insight-vllm
+  ports:
+    - {name: http, port: 8000, targetPort: http}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: erp-insight-models
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 200Gi}

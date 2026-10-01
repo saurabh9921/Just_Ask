@@ -1,0 +1,45 @@
+# Non-secret configuration shared by api, worker, scheduler and the migrate job.
+# Secrets (database URL with password, Redis URL, JWT/encryption keys, Qdrant and LLM
+# API keys) live in the `erp-insight-secrets` Secret - see docs/deployment.md.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erp-insight-config
+  labels:
+    app.kubernetes.io/part-of: erp-insight-ai
+data:
+  APP_ENV: production
+  LOG_LEVEL: INFO
+  LOG_JSON: "true"
+  QDRANT_URL: http://qdrant:6333
+  # GPU production default: vLLM's OpenAI-compatible server (optional/vllm.yaml).
+  LLM_PROVIDER: vllm
+  LLM_BASE_URL: http://vllm:8000/v1
+  LLM_MODEL: local-model            # configuration only; never hardcoded in code
+  EXTERNAL_LLM_ENABLED: "false"
+  EMBEDDING_PROVIDER: openai_compatible
+  EMBEDDING_BASE_URL: http://vllm-embeddings:8000/v1
+  EMBEDDING_MODEL: your-embedding-model
+  EMBEDDING_DIMENSIONS: "1024"
+  SEMANTIC_LAYER_PATH: /srv/semantic-layer
+  METADATA_SYNC_MODE: celery
+  SQLITE_CONNECTIONS_ENABLED: "false"
+  MAX_QUERY_ROWS: "1000"
+  MAX_QUERY_SECONDS: "30"
+  MAX_AGENT_STEPS: "12"
+  QUERY_CACHE_TTL_SECONDS: "300"
+  QUERY_RESULT_CACHE_ENABLED: "true"
+  QUERY_RATE_LIMIT_PER_TENANT_PER_MINUTE: "600"
+  ENABLE_FOUNDATION_CONNECTORS: "false"
+  SQLSERVER_ODBC_DRIVER: ODBC Driver 18 for SQL Server
+  EXPORT_DIR: /srv/data/exports
+  EXPORT_MAX_ROWS: "100000"
+  EXPORT_TTL_SECONDS: "3600"
+  # The platform's own services are never valid ERP connection targets (SSRF).
+  CONNECTION_HOST_DENYLIST: >-
+    localhost,127.0.0.0/8,::1/128,169.254.0.0/16,fe80::/10,0.0.0.0/8,
+    metadata.google.internal,kubernetes.default,kubernetes.default.svc,
+    redis,qdrant,api,worker,vllm,vllm-embeddings,postgres
+  # Only the ingress controller talks to the API pods (NetworkPolicy); trust its headers.
+  FORWARDED_ALLOW_IPS: "*"
+  OTEL_ENABLED: "false"

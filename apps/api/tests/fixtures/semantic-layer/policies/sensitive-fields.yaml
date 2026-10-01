@@ -1,0 +1,47 @@
+# Sensitive-field classification, applied to every field name the platform sees
+# (semantic layer and discovered metadata).
+#   forbid - never exposed, indexed for retrieval, sent to a model, or returned
+#   mask   - may be exposed only if the semantic layer marks the dimension
+#            `sensitive: true`; never projected raw (Phase 4)
+# Built-in floor rules (credentials, account numbers, government IDs) always apply.
+sensitive_fields:
+  - pattern: "(?i)(bank_?account|iban|swift|bic_?code|routing_?number)"
+    classification: restricted
+    action: forbid
+    description: Bank account identifiers
+  - pattern: "(?i)(card_?number|credit_?card|cvv|cvc)"
+    classification: restricted
+    action: forbid
+    description: Payment card data
+  - pattern: "(?i)(tax_?id|vat_?(id|number)|ssn|social_?security|national_?id|passport)"
+    classification: restricted
+    action: forbid
+    description: Tax and government identifiers
+  - pattern: "(?i)(password|passwd|secret|token|api_?key)"
+    classification: restricted
+    action: forbid
+    description: Credentials and payment tokens
+  - pattern: "(?i)(salary|wage|compensation)"
+    classification: restricted
+    action: forbid
+    description: Personal compensation
+  - pattern: "(?i)e_?mail"
+    classification: confidential
+    action: mask
+    description: Email addresses
+  - pattern: "(?i)(phone|mobile|fax)"
+    classification: confidential
+    action: mask
+    description: Phone numbers
+  - pattern: "(?i)(street|postal_?code|zip_?code|address)"
+    classification: confidential
+    action: mask
+    description: Postal addresses
+  - pattern: "(?i)contact_?name"
+    classification: confidential
+    action: mask
+    description: Personal contact names
+  - pattern: "(?i)(birth_?date|date_?of_?birth|dob)"
+    classification: confidential
+    action: mask
+    description: Dates of birth
